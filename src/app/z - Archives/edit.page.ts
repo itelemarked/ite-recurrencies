@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { IonicModule } from '@ionic/angular';
-import { RecurrencyItemEdit1Component } from './components/recurrency-item-edit1.component';
+import { RecurrencyItemEdit1Component } from './recurrency-item-edit1.component';
 
 @Component({
   selector: 'app-home',

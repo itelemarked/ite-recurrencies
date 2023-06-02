@@ -1,8 +1,10 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { IonicModule } from '@ionic/angular';
-import { RecurrencyItem1Component } from './components/recurrency-item1.component';
-import { DATAS, DataService, Recurrency } from './data.service';
+import { RecurrenciesService } from '../recurrencies/recurrencies.service';
+import { Observable } from 'rxjs';
+import { Recurrency } from '../recurrencies/recurrency.model';
+import { RecurrencyItem1Component } from '../recurrencies/recurrency-item1.component';
 
 @Component({
   selector: 'app-home',
@@ -32,7 +34,7 @@ import { DATAS, DataService, Recurrency } from './data.service';
           <div style="width: 30%; text-align: center;">expiry</div>
         </ion-item>
 
-        <app-recurrency-item1 *ngFor="let recurrency of recurrencies" [item]="recurrency"></app-recurrency-item1>
+        <app-recurrency-item1 *ngFor="let recurrency of (recurrencies$ | async)" [item]="recurrency"></app-recurrency-item1>
       </ion-list>
 
     </ion-content>
@@ -41,31 +43,14 @@ import { DATAS, DataService, Recurrency } from './data.service';
 })
 export class HomePage {
 
-  recurrencies: Recurrency[] = [];
+  recurrencies$: Observable<Recurrency[]>;
 
-  constructor(private datas: DataService) {
-    datas.recurrencies$.subscribe(recs => this.recurrencies = recs)
+  constructor(private rec: RecurrenciesService) {
+
+    this.recurrencies$ = rec.getAll$()
+
   }
 
-  onAddRecurrency() {
-    this.datas.createRecurrency({
-      title: 'P7',
-      lastFlight: '2022-02-02',
-      period: {value: 94, unit: 'days'},
-      expiry: '2022-03-03'
-    })
-  }
+  onAddRecurrency() {}
 
-  // constructor(private datas: DataService) {
-  //   this.datas.createRecurrency({
-  //     title: 'P7',
-  //     lastFlight: '2022-02-02',
-  //     period: {value: 94, unit: 'days'},
-  //     expiry: '2022-03-03'
-  //   })
-
-  //   this.datas.deleteRecurrency('id2')
-
-  //   console.log(DATAS)
-  // }
 }

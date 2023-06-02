@@ -66,7 +66,7 @@ export const DATAS: {[key:string]: any} = {
 
 
 @Injectable({providedIn: 'root'})
-export class DataService {
+export class DataMockService {
 
   private _recurrencies$ = new BehaviorSubject<Recurrency[]>(this.getRecurrencies());
   recurrencies$ = this._recurrencies$.asObservable();

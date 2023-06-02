@@ -1,8 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
 import { IonicModule } from '@ionic/angular';
-import { DataService, Recurrency } from '../data.service';
-// import { Recurrency } from '../recurrency.model';
+import { Recurrency } from './recurrency.model';
 
 @Component({
   selector: 'app-recurrency-item1',
@@ -14,7 +13,7 @@ import { DataService, Recurrency } from '../data.service';
       <ion-item>
         <div style="width: 15%;">{{ itemInput.title }}</div>
         <div style="width: 30%; text-align: center;">
-          {{ itemInput.lastFlight }}
+          {{ itemInput.last }}
         </div>
         <div style="width: 25%; text-align: center;">
           {{ itemInput.period.value + ' ' + itemInput.period.unit }}
@@ -39,10 +38,10 @@ export class RecurrencyItem1Component {
   @Input('item')
   itemInput!: Recurrency;
 
-  constructor(private datas: DataService) {}
+  constructor() {}
 
   onRemoveRecurrency() {
-    this.datas.deleteRecurrency(this.itemInput.id)
+
   }
 
   // onCancel(datetime: IonDatetime) {
