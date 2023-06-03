@@ -7,8 +7,8 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "save": "git add . & git commit -am \"automatic save commit\"",
-    "load": "git status & git log --oneline"
+    "save": "git add . && git commit -am \"automatic save commit\"",
+    "load": "git status && git log --oneline"
   },
   "private": true,
   "dependencies": {
