@@ -10,7 +10,7 @@ import { Recurrency } from './recurrency.model';
   template: `
     <ion-item-sliding>
 
-      <ion-item>
+      <!-- <ion-item>
         <div style="width: 15%;">{{ itemInput.title }}</div>
         <div style="width: 30%; text-align: center;">
           {{ itemInput.last }}
@@ -19,6 +19,18 @@ import { Recurrency } from './recurrency.model';
           {{ itemInput.period.value + ' ' + itemInput.period.unit }}
         </div>
         <div style="width: 30%; text-align: center;">{{ itemInput.expiry }}</div>
+      </ion-item> -->
+
+      <ion-item>
+        <ion-label>
+          <h2>{{ itemInput.title }}</h2>
+          <p>last: {{ itemInput.last }}</p>
+          <p>period: {{ itemInput.period.value }} {{ itemInput.period.unit }}</p>
+        </ion-label>
+        <ion-label slot="end">
+          <h3>{{ itemInput.expiry }}</h3>
+          <p>{{ daysLeft }} days left</p>
+        </ion-label>
       </ion-item>
 
       <ion-item-options>
@@ -38,11 +50,11 @@ export class RecurrencyItem1Component {
   @Input('item')
   itemInput!: Recurrency;
 
+  daysLeft: number = 99;
+
   constructor() {}
 
-  onRemoveRecurrency() {
-
-  }
+  onRemoveRecurrency() {}
 
   // onCancel(datetime: IonDatetime) {
   //   datetime.cancel(true);

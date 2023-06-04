@@ -35,27 +35,11 @@ import { RecurrencyEditModal } from '../recurrencies/recurrenciy-edit.modal';
           <div style="width: 30%; text-align: center;">expiry</div>
         </ion-item>
 
-        <ion-item>
-          <ion-label>
-            <h1>IR rating</h1>
-          <p>last: 2023-01-01</p>
-          <p>period: 60 days</p>
-          </ion-label>
-          <ion-label slot="end">
-            <h1>03.02.2022</h1>
-            <p>32 days remaining</p>
-          </ion-label>
-        </ion-item>
-
         <app-recurrency-item1
           *ngFor="let recurrency of recurrencies$ | async"
           [item]="recurrency"
           (click)="onOpenEditModal(recurrency)"
         ></app-recurrency-item1>
-
-        <!-- <ion-button id="open-modal" expand="block">Open Card Modal</ion-button> -->
-
-        <!-- <app-recurrency-edit-modal trigger="open-modal"></app-recurrency-edit-modal> -->
 
       </ion-list>
     </ion-content>
