@@ -5,7 +5,7 @@ import { RecurrenciesService } from '../recurrencies/recurrencies.service';
 import { Observable } from 'rxjs';
 import { Recurrency } from '../recurrencies/recurrency.model';
 import { RecurrencyItem1Component } from '../recurrencies/recurrency-item1.component';
-import { RecurrencyEditModal } from '../recurrencies/recurrenciy-edit.modal';
+import { RecurrencyEditModal } from '../recurrencies/recurrency-edit.modal';
 
 @Component({
   selector: 'app-home',
