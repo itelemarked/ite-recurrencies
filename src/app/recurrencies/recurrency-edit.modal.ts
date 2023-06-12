@@ -1,45 +1,57 @@
 import { CommonModule } from '@angular/common';
-import { Component, ElementRef, EventEmitter, Input, Output, Renderer2 } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  EventEmitter,
+  Input,
+  Output,
+  Renderer2,
+} from '@angular/core';
 import { IonDatetime, IonicModule } from '@ionic/angular';
-import { PeriodUnit, Recurrency, RecurrencyPeriod } from './recurrency.model';
-
-
+import { Recurrency } from './recurrency.model';
 
 @Component({
   selector: 'app-date-modal',
   standalone: true,
   imports: [CommonModule, IonicModule],
   template: `
-    <ion-modal
-      [trigger]="triggerInput"
-      [keepContentsMounted]="true"
-      >
+    <ion-modal [trigger]="triggerInput" [keepContentsMounted]="true">
       <ng-template>
         <ion-datetime
           #datetime
           [value]="valueInput"
           presentation="date"
-          (ionChange)="onValueChange($event)">
-          <span *ngIf="titleInput !== undefined"slot="title">{{ titleInput }}</span>
+          (ionChange)="onValueChange($event)"
+        >
+          <span *ngIf="titleInput !== undefined" slot="title">{{
+            titleInput
+          }}</span>
           <ion-buttons slot="buttons">
-            <ion-button color="danger" (click)="datetime.cancel(true)">Cancel</ion-button>
-            <ion-button color="primary" (click)="onTodayClick(datetime)">TODAY</ion-button>
-            <ion-button color="primary" (click)="datetime.confirm(true)">Ok</ion-button>
+            <ion-button color="danger" (click)="datetime.cancel(true)"
+              >Cancel</ion-button
+            >
+            <ion-button color="primary" (click)="onTodayClick(datetime)"
+              >TODAY</ion-button
+            >
+            <ion-button color="primary" (click)="datetime.confirm(true)"
+              >Ok</ion-button
+            >
           </ion-buttons>
         </ion-datetime>
       </ng-template>
     </ion-modal>
   `,
-  styles: [`
-    ion-modal {
-      --width: fit-content;
-      --height: fit-content;
-      --border-radius: 8px;
-    }
-  `]
+  styles: [
+    `
+      ion-modal {
+        --width: fit-content;
+        --height: fit-content;
+        --border-radius: 8px;
+      }
+    `,
+  ],
 })
 export class DateModal {
-
   @Input('trigger')
   triggerInput!: string;
 
@@ -50,29 +62,25 @@ export class DateModal {
   titleInput?: string;
 
   @Output('valueChange')
-  valueChangeOutput = new EventEmitter<string>()
+  valueChangeOutput = new EventEmitter<string>();
 
   onValueChange(e: any) {
     this.valueChangeOutput.emit(e.detail.value);
   }
 
   onTodayClick(datetime: IonDatetime) {
-    const today = new Date()
-    const todayIso = today.toISOString().match(/(^\d{4}-\d{2}-\d{2})/)![1]
+    const today = new Date();
+    const todayIso = today.toISOString().match(/(^\d{4}-\d{2}-\d{2})/)![1];
     datetime.reset(todayIso);
-    datetime.confirm(true)
+    datetime.confirm(true);
   }
-
 }
-
-
-
-
 
 @Component({
   selector: 'app-recurrency-edit-modal',
   standalone: true,
   imports: [CommonModule, IonicModule, DateModal],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <ion-header>
       <ion-toolbar>
@@ -85,66 +93,57 @@ export class DateModal {
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
+
     <ion-content [forceOverscroll]="false">
       <ion-list>
-        <ion-item id="open-last-modal">
-          <ion-label>
-            <h2 class="smaller">Last</h2>
-            <h2 class="edited">{{ lastValue }}</h2>
-          </ion-label>
-          <app-date-modal
-            trigger="open-last-modal"
-            [value]="lastValue"
-            (valueChange)="onLastValueChange($event)">
-          </app-date-modal>
-        </ion-item>
-
-        <!-- <ion-item>
-          <ion-label>
-            <h2 class="smaller">Period</h2>
-            <h2>66 days</h2>
-          </ion-label>
-        </ion-item> -->
-
-        <!-- <ion-item style="display: inline-block; width: 50%;">
-          <ion-input value="66" label="Period" labelPlacement="stacked"></ion-input>
-        </ion-item>
-
-        <ion-item style="display: inline-block; width: 50%;">
-          <ion-input value="days" label="." labelPlacement="stacked"></ion-input>
-        </ion-item> -->
 
         <ion-item>
-        <div style="display: inline-block; width: 50%;">
-          <ion-input value="66" label="Period" labelPlacement="stacked"></ion-input>
-        </div>
+          <ion-input
+            type="date"
+            label="Last event date"
+            labelPlacement="stacked"
+            value="2022-02-02"
+          ></ion-input>
+        </ion-item>
 
-        <div class="app-select" style="display: inline-block; width: 50%;">
-          <ion-select interface="popover" label="." labelPlacement="stacked">
-            <ion-select-option value="days">Days</ion-select-option>
-            <ion-select-option value="weeks">Weeks</ion-select-option>
-            <ion-select-option value="months">Months</ion-select-option>
+        <ion-item style="display: inline-block; width: 30%;">
+          <ion-input
+            value="66"
+            label="Period"
+            labelPlacement="stacked"
+            inputmode="decimal"
+            [clearOnEdit]="true"
+          ></ion-input>
+        </ion-item>
+
+        <ion-item class="app-select" style="display: inline-block; width: 70%;">
+          <ion-select
+            value="day"
+            interface="action-sheet"
+            label="&nbsp;"
+            labelPlacement="stacked"
+          >
+            <ion-select-option value="day">days</ion-select-option>
+            <ion-select-option value="week">weeks</ion-select-option>
+            <ion-select-option value="month">months</ion-select-option>
           </ion-select>
-        </div>
         </ion-item>
 
         <ion-item>
-          <ion-label>
-            <h2 class="smaller">Expiry</h2>
-            <h2>2023-03-01</h2>
-          </ion-label>
+          <ion-input
+            type="date"
+            label="Expiry date"
+            labelPlacement="stacked"
+            value="2022-02-02"
+          ></ion-input>
         </ion-item>
-      </ion-list>
 
+      </ion-list>
     </ion-content>
   `,
   styles: [
     `
-      .smaller {
-        font-size: 0.7em;
-      }
-
-      .edited {
+      ion-input ::ng-deep.native-input, ion-select {
         color: var(--ion-color-primary);
       }
 
@@ -158,7 +157,7 @@ export class RecurrencyEditModal {
   @Input()
   recurrency!: Recurrency;
 
-  lastValue = '2022-02-02'
+  lastValue = '2022-02-02';
 
   constructor(renderer: Renderer2) {}
 
@@ -166,14 +165,8 @@ export class RecurrencyEditModal {
 
   onLastValueChange(val: string) {
     this.lastValue = val;
-    console.log('last value has changed')
+    console.log('last value has changed');
   }
 
   // private dateWithPeriod(initialDate: string, periodValue: number, periodUnit: PeriodUnit): string {}
 }
-
-
-
-
-
-

@@ -3,19 +3,19 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { IonicModule, ModalController } from '@ionic/angular';
 import { RecurrenciesService } from '../recurrencies/recurrencies.service';
 import { Observable } from 'rxjs';
-import { Recurrency } from '../recurrencies/recurrency.model';
-import { RecurrencyItem1Component } from '../recurrencies/recurrency-item1.component';
+import { Recurrency, TEST, toIsoDate } from '../recurrencies/recurrency.model2';
+import { RecurrencyItemComponent } from '../recurrencies/recurrency-item.component';
 import { RecurrencyEditModal } from '../recurrencies/recurrency-edit.modal';
 
 @Component({
   selector: 'app-home',
   standalone: true,
+  imports: [CommonModule, IonicModule, RecurrencyItemComponent, RecurrencyEditModal],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, IonicModule, RecurrencyItem1Component, RecurrencyEditModal],
   template: `
     <ion-header>
       <ion-toolbar>
-        <ion-title>Home</ion-title>
+        <ion-title>Recurrencies</ion-title>
         <ion-buttons slot="end">
           <ion-button (click)="onAddRecurrency()">
             <ion-icon slot="icon-only" name="add-outline"></ion-icon>
@@ -26,20 +26,12 @@ import { RecurrencyEditModal } from '../recurrencies/recurrency-edit.modal';
 
     <ion-content [forceOverscroll]="false">
       <ion-list>
-        <ion-item
-          style="--min-height: 25px;--background: lightgrey;font-size: .8em;"
-        >
-          <div style="width: 15%;"></div>
-          <div style="width: 30%; text-align: center;">last flight</div>
-          <div style="width: 25%; text-align: center;">recurrence</div>
-          <div style="width: 30%; text-align: center;">expiry</div>
-        </ion-item>
 
-        <app-recurrency-item1
+        <!-- <app-recurrency-item
           *ngFor="let recurrency of recurrencies$ | async"
           [item]="recurrency"
           (click)="onOpenEditModal(recurrency)"
-        ></app-recurrency-item1>
+        ></app-recurrency-item> -->
 
       </ion-list>
     </ion-content>
@@ -51,6 +43,9 @@ export class HomePage {
 
   constructor(private rec: RecurrenciesService, private modalCtrl: ModalController) {
     this.recurrencies$ = rec.getAll$();
+
+    /** TO DELETE, TESTING ONLY */
+    TEST();
   }
 
   onAddRecurrency() {}
@@ -61,7 +56,6 @@ export class HomePage {
       componentProps: { recurrency },
       breakpoints: [0, 0.85],
       initialBreakpoint: 0.85,
-      // backdropDismiss: false,
     })
 
     modal.present()
