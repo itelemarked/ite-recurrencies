@@ -9,7 +9,7 @@ export function toIsoDate(s: string | number | 'today'): IsoDate {
   const datum = s === 'today' ? new Date() : new Date(s);
 
   const invalidDate = datum.toString() === 'Invalid Date';
-  if (invalidDate) throw new Error(`Invalid date`)
+  if (invalidDate) throw new Error(`Invalid date... evaluating: ${s}`)
 
   return datum.toISOString().match(/^\d{4}-\d{2}-\d{2}/)![0] as IsoDate;
 }
@@ -61,6 +61,7 @@ export class Recurrency {
 
 	setLastEvent(val: IsoDate) {
 		const { nb, unit } = this._period;
+
 		this._lastEvent = val;
 		this._inputType = 'lastEvent';
 		this._expiry = this.computedIsoDate(val, nb, unit)
@@ -68,72 +69,77 @@ export class Recurrency {
 
 	setExpiry(val: IsoDate) {
 		const { nb, unit } = this._period;
+
 		this._expiry = val;
 		this._inputType = 'expiry';
 		this._lastEvent = this.computedIsoDate(val, -nb, unit)
 	}
 
 	setPeriod(val: { nb: number, unit: PeriodUnit }) {
-		const { nb, unit } = val;
+    const { nb, unit } = val;
+    const inputType = this._inputType;
+    const lastEvent = this._lastEvent;
+    const expiry = this._expiry;
 
-		this._period = val;
-		switch(this._inputType) {
-			case 'lastEvent': {
-				this._expiry = this.computedIsoDate(this._lastEvent, nb, unit)
-				break;
-			}
-			case 'expiry': {
-				this._lastEvent = this.computedIsoDate(this._expiry, -nb, unit)
-				break;
-			}
-		}
-	}
-
-	// TODO
-	private computedIsoDate(initialIsoDate: IsoDate, nb: number, unit: PeriodUnit): IsoDate {
-
-    const dmy = (isoDate: IsoDate): { d: number, m: number, y: number } => {
-      const datum = new Date(isoDate);
-      const d = datum.getDate();
-      const m = datum.getMonth() + 1;
-      const y = datum.getFullYear();
-      return { d, m, y };
+    const updateExpiry = (): IsoDate => {
+      if (inputType === 'expiry') return expiry;
+      return this.computedIsoDate(lastEvent, nb, unit);
     }
 
-    const dayMs = 24 * 60 * 60 * 1000;
+    const updateLastEvent = (): IsoDate => {
+      if (inputType === 'lastEvent') return lastEvent;
+      return this.computedIsoDate(expiry, -nb, unit);
+    }
 
-		switch (unit) {
-			case 'day': {
-        const dateMs = new Date(initialIsoDate).getTime();
-        const newDateMs = dateMs + nb * dayMs;
-        return toIsoDate(newDateMs);
-			}
-			case 'week': {
-        const dateMs = new Date(initialIsoDate).getTime();
-        const newDateMs = dateMs + nb * 7 * dayMs;
-        return toIsoDate(newDateMs);
-			}
-			case 'month': {
-        const {d, m, y } = dmy(initialIsoDate);
-
-        const dd = d.toString().padStart(2, '0')
-        const mm = ((m + nb) % 12).toString().padStart(2, '0')
-        const yyyy = (y + Math.floor(nb / 12)).toString()
-
-        return toIsoDate(`${yyyy}-${mm}-${dd}`)
-			}
-			case 'year': {
-        const {d, m, y } = dmy(initialIsoDate);
-
-        const dd = d.toString().padStart(2, '0')
-        const mm = m.toString().padStart(2, '0')
-        const yyyy = (y + nb).toString()
-
-        return toIsoDate(`${yyyy}-${mm}-${dd}`)
-			}
-		}
+    this._period = val;
+    this._expiry = updateExpiry()
+    this._lastEvent = updateLastEvent()
 	}
 
+
+	private computedIsoDate(initialIsoDate: IsoDate, nb: number, unit: PeriodUnit): IsoDate {
+
+    const date = new Date(initialIsoDate);
+
+    const addDay = (): IsoDate => {
+      date.setDate(date.getDate() + nb);
+      return toIsoDate(date.toISOString());
+    }
+
+    const addWeek = (): IsoDate => {
+      date.setDate(date.getDate() + nb * 7);
+      return toIsoDate(date.toISOString());
+    }
+
+    const addMonth = (): IsoDate => {
+      const initialDay = date.getDate();
+      date.setMonth(date.getMonth() + nb);
+
+      // move the date to the previous month last day!
+      if (initialDay !== date.getDate()) date.setDate(0);
+      return toIsoDate(date.toISOString());
+    }
+
+    const addYear = (): IsoDate => {
+      const initialDay = date.getDate()
+      date.setFullYear(date.getFullYear() + nb);
+
+      // move the date to the previous month last day!
+      if (initialDay !== date.getDate()) date.setDate(0);
+      return toIsoDate(date.toISOString());
+    }
+
+    switch (unit) {
+			case 'day':
+        return addDay();
+			case 'week':
+        return addWeek();
+			case 'month':
+        return addMonth();
+			case 'year':
+        return addYear();
+		}
+	}
 
 }
 
@@ -142,24 +148,99 @@ export class Recurrency {
 
 export function TEST() {
 
-  const r = new Recurrency({
-    id: 'abcd',
-    title: 'EC',
-    lastEvent: toIsoDate('2022-02-02'),
-    period: { nb: 1, unit: 'year' }
-  })
-
-  console.log(r.expiry)
-
-  /** TODO: error: logs 2021-01-04! (iso 2022) */
-
   // const r = new Recurrency({
   //   id: 'abcd',
   //   title: 'EC',
   //   lastEvent: toIsoDate('2022-02-02'),
-  //   period: { nb: 1, unit: 'month' }
+  //   period: { nb: 11, unit: 'month' }
+  // })
+
+  // console.log(r.expiry)
+
+  /** TODO: error: logs 2021-01-04! (iso 2022) */
+  // const r = new Recurrency({
+  //   id: 'abcd',
+  //   title: 'EC',
+  //   lastEvent: toIsoDate('2022-02-02'),
+  //   period: { nb: 2, unit: 'month' }
   // })
 
   // r.setExpiry(toIsoDate('2022-02-04'))
   // console.log(r.lastEvent)
+
+
+
+
+  // const testing: {
+  //   date: string,
+  //   nb: number,
+  //   unit: PeriodUnit,
+  //   result: string
+  // } [] = [
+  //   {date: '2022-01-01', nb: 1, unit: 'day', result: '2022-01-02'},
+  //   {date: '2022-01-01', nb: -1, unit: 'day', result: '2021-12-31'},
+  //   {date: '2022-01-01', nb: 30, unit: 'day', result: '2022-01-31'},
+  //   {date: '2022-01-31', nb: -30, unit: 'day', result: '2022-01-01'},
+  //   {date: '2022-01-01', nb: 31, unit: 'day', result: '2022-02-01'},
+  //   {date: '2022-02-01', nb: -31, unit: 'day', result: '2022-01-01'},
+
+  //   {date: '2022-01-01', nb: 1, unit: 'week', result: '2022-01-08'},
+  //   {date: '2022-01-01', nb: -1, unit: 'week', result: '2021-12-25'},
+  //   {date: '2022-01-01', nb: -5, unit: 'week', result: '2021-11-27'},
+  //   {date: '2022-01-01', nb: 5, unit: 'week', result: '2022-02-05'},
+
+  //   {date: '2022-01-01', nb: 1, unit: 'month', result: '2022-02-01'},
+  //   {date: '2022-01-01', nb: -1, unit: 'month', result: '2021-12-01'},
+  //   {date: '2022-01-01', nb: 13, unit: 'month', result: '2023-02-01'},
+  //   {date: '2022-01-01', nb: -13, unit: 'month', result: '2020-12-01'},
+  //   {date: '2022-01-31', nb: 1, unit: 'month', result: '2022-02-28'},
+
+  //   {date: '2022-01-31', nb: 1, unit: 'year', result: '2023-01-31'},
+  //   {date: '2022-01-31', nb: -2, unit: 'year', result: '2020-01-31'},
+  //   {date: '2020-02-29', nb: 1, unit: 'year', result: '2021-02-28'},
+  // ]
+
+  // testing.forEach((t, i) => {
+  //   const r = new Recurrency({
+  //     id: 'abcd',
+  //     title: 'EC',
+  //     lastEvent: toIsoDate('2022-02-02'),
+  //     period: { nb: 11, unit: 'month' }
+  //   })
+
+  //   const computed = r.computedIsoDate(toIsoDate(t.date), t.nb, t.unit)
+  //   console.log(`${computed === t.result}, id: ${i}, date: ${t.date}, nb: ${t.nb}, unit: ${t.unit}, result: ${t.result}, (${computed})`)
+  // })
+
+
+
+
+
+  // function addDay(initialIsoDate: IsoDate, nb: number) {
+  //   const date = new Date(initialIsoDate);
+
+  //   date.setDate(date.getDate() + nb);
+  //   console.log(toIsoDate(date.toISOString()))
+
+  //   // if (date.getDate() !== initialDay) {
+  //   //   date.setDate(0);
+  //   // }
+  //   // console.log(toIsoDate(date.toISOString()))
+  // }
+
+  // function addMonth(initialIsoDate: IsoDate, nb: number) {
+  //   const date = new Date(initialIsoDate);
+  //   const initialDay = date.getDate();
+
+  //   date.setMonth(date.getMonth() + nb);
+  //   console.log(toIsoDate(date.toISOString()))
+
+  //   if (date.getDate() !== initialDay) {
+  //     date.setDate(0);
+  //   }
+  //   console.log(toIsoDate(date.toISOString()))
+  // }
+
+  // addDay(toIsoDate('2022-01-31'), -31)
+
 }

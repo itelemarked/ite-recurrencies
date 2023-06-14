@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, Input, OnInit } from '@angular/core
 import { IonicModule } from '@ionic/angular';
 
 /** TODO: update to recurrency.model2 */
-import { Recurrency, RecurrencyPeriod, addPeriod, expiry, formattedDate, today } from './recurrency.model';
+import { IsoDate, Recurrency, RecurrencyPeriod, formattedDate } from './recurrency.model3';
 
 @Component({
   selector: 'app-recurrency-item',
@@ -13,7 +13,7 @@ import { Recurrency, RecurrencyPeriod, addPeriod, expiry, formattedDate, today }
   template: `
     <ion-item-sliding>
 
-      <ion-item>
+      <ion-item lines="none">
         <ion-label>
           <h2>{{ title }}</h2>
           <p>Last event: {{ lastEventDate }}</p>
@@ -24,6 +24,7 @@ import { Recurrency, RecurrencyPeriod, addPeriod, expiry, formattedDate, today }
           <p>{{ periodLeft }}</p>
         </ion-label>
       </ion-item>
+      <ion-progress-bar [value]="progress" [color]="progressColor"></ion-progress-bar>
 
       <ion-item-options>
         <ion-item-option color="light">
@@ -39,47 +40,58 @@ import { Recurrency, RecurrencyPeriod, addPeriod, expiry, formattedDate, today }
 })
 export class RecurrencyItemComponent implements OnInit {
 
-  @Input('item')
-  itemInput!: Recurrency;
+  @Input()
+  recurrency!: Recurrency;
 
   title!: string;
   lastEventDate!: string;
   period!: string;
-  /** TODO */
-  periodLeft: string = '99 days left';
   expiryDate!: string;
+  periodLeft!: string;
+  progress!: number;
+  progressColor!: string;
+
 
   ngOnInit(): void {
-    const { title, lastEvent, period } = this.itemInput;
+    const { title, lastEvent, period, expiry } = this.recurrency;
     this.title = title;
     this.lastEventDate = formattedDate(lastEvent);
     this.period = this.periodString(period)
-
-    /** TODO */
-    this.periodLeft = this.periodLeftString(this.itemInput.lastEvent, this.itemInput.period)
-    this.expiryDate = formattedDate(addPeriod(lastEvent, period.value, period.unit))
+    this.expiryDate = formattedDate(expiry)
+    this.periodLeft = this.periodLeftString(this.recurrency.expiry)
+    this.progress = this.getProgress(lastEvent, expiry)
+    this.progressColor = this.getProgressColor(0.75)
   }
 
   /** TODO */
   onRemoveRecurrency() {}
 
   private periodString(period: RecurrencyPeriod): string {
-    const suffix = period.value > 1 ? 's' : '';
-    return period.value.toString() + ' ' + period.unit + suffix;
+    const suffix = period.nb > 1 ? 's' : '';
+    return period.nb.toString() + ' ' + period.unit + suffix;
   }
 
-  private periodLeftString(lastEvent: string, period: RecurrencyPeriod) {
-    const expiryMs = new Date(expiry(this.itemInput)).getTime()
-    const todayMs = new Date(today()).getTime()
+  private periodLeftString(expiry: IsoDate) {
+    const todayMs = new Date().setHours(0,0,0,0);
+    const expiryMs = new Date(expiry).getTime();
+    const daysLeft = Math.round((expiryMs - todayMs) / 24 / 60 / 60 / 1000);
+    const suffix = daysLeft === 1 ? '' : 's'
+    const daysLeftString = daysLeft < 0 ? 'Expired...!' : `${daysLeft} day${suffix} left`;
+    return daysLeftString;
+  }
 
-    const diff = expiryMs - todayMs
-    if (diff < 0) {
-      return 'Expired...!'
-    } else {
-      const dayLeft = Math.round(diff / 24 / 60 / 60 / 1000)
-      const suffix = dayLeft > 1 ? 's' : '';
-      return `${dayLeft} day${suffix} left`;
-    }
+  private getProgress(lastEvent: IsoDate, expiry: IsoDate): number {
+    const lastMs = new Date(lastEvent).getTime()
+    const expiryMs = new Date(expiry).getTime()
+    const todayMs = new Date().setHours(0,0,0,0)
+
+    return (todayMs - lastMs) / (expiryMs - lastMs)
+  }
+
+  private getProgressColor(threshold: number): string {
+    const { lastEvent, expiry } = this.recurrency;
+    if (this.getProgress(lastEvent, expiry) < threshold) return 'primary'
+    return 'warning';
   }
 
 }

@@ -1,8 +1,8 @@
 import { Injectable } from "@angular/core";
 import { Firestore, collectionData, CollectionReference } from "@angular/fire/firestore";
 import { collection } from "@firebase/firestore";
-import { Observable } from "rxjs";
-import { Recurrency } from "./recurrency.model2";
+import { Observable, map } from "rxjs";
+import { IRecurrencyData, Recurrency, createRecurrency } from "./recurrency.model3";
 
 
 
@@ -13,7 +13,11 @@ export class RecurrenciesService {
 
   getAll$(): Observable<Recurrency[]> {
     const ref = collection(this.firestore, 'recurrencies')
-    return collectionData(ref, { idField: 'id' }) as Observable<Recurrency[]>
+    const datas = collectionData(ref, { idField: 'id' }) as Observable<IRecurrencyData[]>
+    return datas
+    .pipe(
+      map(data => data.map(d => createRecurrency(d)))
+    )
   }
 
 }

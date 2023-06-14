@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { IonicModule, ModalController } from '@ionic/angular';
 import { RecurrenciesService } from '../recurrencies/recurrencies.service';
 import { Observable } from 'rxjs';
-import { Recurrency, TEST, toIsoDate } from '../recurrencies/recurrency.model2';
+import { Recurrency, TEST } from '../recurrencies/recurrency.model3';
 import { RecurrencyItemComponent } from '../recurrencies/recurrency-item.component';
 import { RecurrencyEditModal } from '../recurrencies/recurrency-edit.modal';
 
@@ -27,11 +27,11 @@ import { RecurrencyEditModal } from '../recurrencies/recurrency-edit.modal';
     <ion-content [forceOverscroll]="false">
       <ion-list>
 
-        <!-- <app-recurrency-item
+        <app-recurrency-item
           *ngFor="let recurrency of recurrencies$ | async"
-          [item]="recurrency"
+          [recurrency]="recurrency"
           (click)="onOpenEditModal(recurrency)"
-        ></app-recurrency-item> -->
+        ></app-recurrency-item>
 
       </ion-list>
     </ion-content>
@@ -43,12 +43,26 @@ export class HomePage {
 
   constructor(private rec: RecurrenciesService, private modalCtrl: ModalController) {
     this.recurrencies$ = rec.getAll$();
+    this.recurrencies$.subscribe(console.log)
 
     /** TO DELETE, TESTING ONLY */
     TEST();
   }
 
-  onAddRecurrency() {}
+  async onAddRecurrency() {
+    const modal = await this.modalCtrl.create({
+      component: RecurrencyEditModal,
+      breakpoints: [0, 0.85],
+      initialBreakpoint: 0.85,
+    })
+
+    await modal.present()
+
+    const { data, role } = await modal.onWillDismiss()
+    if (role === 'save') {
+      console.log(data)
+    }
+  }
 
   async onOpenEditModal(recurrency: Recurrency) {
     const modal = await this.modalCtrl.create({
@@ -58,6 +72,12 @@ export class HomePage {
       initialBreakpoint: 0.85,
     })
 
-    modal.present()
+    await modal.present()
+
+    const { data, role } = await modal.onWillDismiss()
+    if (role === 'save') {
+      console.log(data)
+    }
   }
+
 }
