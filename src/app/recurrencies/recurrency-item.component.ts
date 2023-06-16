@@ -81,6 +81,13 @@ export class RecurrencyItemComponent implements OnInit {
   }
 
   private getProgress(lastEvent: IsoDate, expiry: IsoDate): number {
+    /** returns a number corresponding to today in regard to the last event and the expiry dates.
+     *  E.g: today before lastEvent: progress smaller than 0.
+     *  E.g: today on lastEvent: progress = 0
+     *  E.g: today between lastEvent and expiry: progress between 0 and 1
+     *  E.g: today on expiry: progress = 1
+     *  E.g: today after expiry: progress > 1
+     */
     const lastMs = new Date(lastEvent).getTime()
     const expiryMs = new Date(expiry).getTime()
     const todayMs = new Date().setHours(0,0,0,0)
@@ -90,7 +97,8 @@ export class RecurrencyItemComponent implements OnInit {
 
   private getProgressColor(threshold: number): string {
     const { lastEvent, expiry } = this.recurrency;
-    if (this.getProgress(lastEvent, expiry) < threshold) return 'primary'
+    if (this.getProgress(lastEvent, expiry) < threshold) return 'primary';
+    if (this.getProgress(lastEvent, expiry) > 1) return 'danger';
     return 'warning';
   }
 

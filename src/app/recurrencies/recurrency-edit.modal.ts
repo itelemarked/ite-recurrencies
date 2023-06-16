@@ -2,13 +2,14 @@ import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
-  EventEmitter,
   Input,
-  Output,
-  Renderer2,
+  OnDestroy,
+  OnInit,
 } from '@angular/core';
-import { IonDatetime, IonicModule, ModalController } from '@ionic/angular';
-import { IRecurrencyData, IsoDate, Recurrency, toIsoDate } from './recurrency.model3';
+import { IonicModule, ModalController } from '@ionic/angular';
+import { IsoDate, PeriodUnit, Recurrency, RecurrencyInputType, computedIsoDate, copy, createRecurrency, toIsoDate, toPositiveInteger } from './recurrency.model3';
+import { AbstractControl, FormBuilder, FormControl, FormGroup, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
+import { Subscription } from 'rxjs';
 
 // @Component({
 //   selector: 'app-date-modal',
@@ -76,10 +77,34 @@ import { IRecurrencyData, IsoDate, Recurrency, toIsoDate } from './recurrency.mo
 //   }
 // }
 
+
+
+
+function isoDateValidator() {}
+
+function positiveIntegerValidator(): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+
+    let isForbidden: boolean = false;
+    try { toPositiveInteger(+control.value) }
+    catch { isForbidden = true; }
+
+    return isForbidden ? {nonPositiveInteger: true} : null;
+  };
+}
+
+export function forbiddenNameValidator(nameRe: RegExp): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+    const forbidden = nameRe.test(control.value);
+    return forbidden ? {forbiddenName: {value: control.value}} : null;
+  };
+}
+
+
 @Component({
   selector: 'app-recurrency-edit-modal',
   standalone: true,
-  imports: [CommonModule, IonicModule],
+  imports: [CommonModule, IonicModule, ReactiveFormsModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <ion-header>
@@ -87,105 +112,223 @@ import { IRecurrencyData, IsoDate, Recurrency, toIsoDate } from './recurrency.mo
     </ion-header>
 
     <ion-content [forceOverscroll]="false">
-      <ion-list>
 
-        <ion-item>
-          <ion-input
-            type="text"
-            label="Title"
-            labelPlacement="stacked"
-            [value]="title"
-            placeholder="Enter a title"
-          ></ion-input>
-        </ion-item>
+      <form [formGroup]="form">
+        <ion-list>
 
-        <ion-item>
-          <ion-input
-            type="date"
-            label="Last event date"
-            labelPlacement="stacked"
-            [value]="lastEvent"
-          ></ion-input>
-        </ion-item>
+          <ion-item>
+            <ion-label position="stacked">Title</ion-label>
+            <ion-input
+              type="text"
+              formControlName="titleCtl"
+              placeholder="Enter a title"
+            ></ion-input>
+          </ion-item>
 
-        <ion-item style="display: inline-block; width: 30%;">
-          <ion-input
-            [value]="periodNb"
-            placeholder="Enter a number"
-            label="Period"
-            labelPlacement="stacked"
-            inputmode="decimal"
-            [clearOnEdit]="true"
-          ></ion-input>
-        </ion-item>
+          <ion-item>
+            <ion-label position="stacked">Last event date</ion-label>
+            <ion-input
+              type="date"
+              formControlName="lastEventCtl"
+            ></ion-input>
+          </ion-item>
 
-        <ion-item class="app-select" style="display: inline-block; width: 70%;">
-          <ion-select
-            [value]="periodUnit"
-            interface="action-sheet"
-            label="&nbsp;"
-            labelPlacement="stacked"
-          >
-            <ion-select-option value="day">days</ion-select-option>
-            <ion-select-option value="week">weeks</ion-select-option>
-            <ion-select-option value="month">months</ion-select-option>
-          </ion-select>
-        </ion-item>
+          <ion-item class="inline-block">
+            <ion-label position="stacked">Period</ion-label>
+            <ion-input
+              formControlName="periodNbCtl"
+              placeholder="Enter a number"
+              inputmode="decimal"
+              [clearOnEdit]="true"
+            ></ion-input>
+          </ion-item>
 
-        <ion-item>
-          <ion-input
-            type="date"
-            label="Expiry date"
-            labelPlacement="stacked"
-            [value]="expiry"
-          ></ion-input>
-        </ion-item>
+          <ion-item class="inline-block">
+            <ion-label position="stacked"></ion-label>
+            <ion-select
+              formControlName="periodUnitCtl"
+              interface="action-sheet"
+            >
+              <ion-select-option value="day">days</ion-select-option>
+              <ion-select-option value="week">weeks</ion-select-option>
+              <ion-select-option value="month">months</ion-select-option>
+            </ion-select>
+          </ion-item>
 
-        <div style="padding: 20px 10px;">
-          <ion-button
-            fill="outline"
-            expand="block"
-            (click)="onSaveClick()"
-          >SAVE</ion-button>
-        </div>
+          <ion-item>
+            <ion-label position="stacked">Expiry date</ion-label>
+            <ion-input
+              type="date"
+              formControlName="expiryCtl"
+            ></ion-input>
+          </ion-item>
 
-      </ion-list>
+          <div style="padding: 20px 10px;">
+            <ion-button
+              fill="outline"
+              expand="block"
+              (click)="onSaveClick()"
+            >SAVE</ion-button>
+          </div>
+
+        </ion-list>
+      </form>
     </ion-content>
   `,
   styles: [
     `
-      ion-input ::ng-deep.native-input, ion-select {
+      .inline-block {
+        display: inline-block;
+        width: 50%;
+      }
+
+      ion-input, ion-select {
         color: var(--ion-color-primary);
       }
 
-      .app-select ::part(icon), .app-select .label-text {
-        opacity: 0;
+      ion-item.ion-invalid.ion-touched {
+        color: red;
       }
     `,
   ],
 })
-export class RecurrencyEditModal {
+export class RecurrencyEditModal implements OnInit, OnDestroy {
   @Input()
-  recurrency?: Recurrency;
+  readonly recurrency?: Recurrency;
 
-  title: string = '';
-  lastEvent: string = toIsoDate('today');
-  expiry: string = '';
-  periodNb: string = '';
-  periodUnit: string = 'day';
+  // oldStatus: FormControlStatus = 'INVALID';
+  id?: string;
+  inputType: RecurrencyInputType = 'lastEvent';
 
-  constructor(private modalCtrl: ModalController) {
-    console.log('modal constructor')
+  form = this.fb.group({
+    titleCtl: ['', {
+      validators: [Validators.required],
+      // updateOn: 'blur'
+    }],
+    lastEventCtl: ['', Validators.required],
+    expiryCtl: ['', Validators.required],
+    periodNbCtl: ['', [Validators.required, positiveIntegerValidator()]],
+    periodUnitCtl: ['', Validators.required],
+  })
+
+  get titleCtl() { return this.form.get('titleCtl')!; }
+  get lastEventCtl() { return this.form.get('lastEventCtl')!; }
+  get expiryCtl() { return this.form.get('expiryCtl')!; }
+  get periodNbCtl() { return this.form.get('periodNbCtl')!; }
+  get periodUnitCtl() { return this.form.get('periodUnitCtl')!; }
+
+  private subscriptions: Subscription[] = [];
+
+  constructor(private modalCtrl: ModalController, private fb: FormBuilder) {}
+
+  ngOnInit() {
+    if (this.recurrency) {
+      this.setForm(this.recurrency)
+      this.id = this.recurrency.id;
+      this.inputType = this.recurrency.inputType;
+    }
+
+    this.subscribeAll()
+  }
+
+  onLastEventChange(val: string | null) {
+    this.unsubscribeAll()
+    if (this.periodNbCtl.valid && this.periodUnitCtl.valid && val !== null) {
+      const newExpiry = computedIsoDate(
+        toIsoDate(val),
+        toPositiveInteger(+this.periodNbCtl.value!),
+        this.periodUnitCtl.value! as PeriodUnit
+      )
+
+      this.expiryCtl.setValue(newExpiry);
+      this.inputType = 'lastEvent';
+    }
+    this.subscribeAll()
+  }
+
+  onPeriodChange(val: string | null) {
+    this.unsubscribeAll()
+    if (this.periodNbCtl.valid && this.periodUnitCtl.valid) {
+      if (this.inputType === 'lastEvent' && this.lastEventCtl.valid) {
+        const newExpiry = computedIsoDate(
+          toIsoDate(this.lastEventCtl.value!),
+          +this.periodNbCtl.value!,
+          this.periodUnitCtl.value! as PeriodUnit
+        )
+        this.expiryCtl.setValue(newExpiry)
+      }
+
+      if (this.inputType === 'expiry' && this.expiryCtl.valid) {
+        const newLastEvent = computedIsoDate(
+          toIsoDate(this.expiryCtl.value!),
+          -(+this.periodNbCtl.value!),
+          this.periodUnitCtl.value! as PeriodUnit
+        )
+        this.lastEventCtl.setValue(newLastEvent)
+      }
+    }
+    this.subscribeAll()
+  }
+
+  onExpiryChange(val: string | null) {
+    this.unsubscribeAll()
+    if (this.periodNbCtl.valid && this.periodUnitCtl.valid && this.expiryCtl.valid) {
+      const newLastEvent = computedIsoDate(
+        toIsoDate(this.expiryCtl.value!),
+        -(+this.periodNbCtl.value!),
+        this.periodUnitCtl.value! as PeriodUnit
+      )
+
+      this.lastEventCtl.setValue(newLastEvent);
+      this.inputType = 'expiry';
+    }
+    this.subscribeAll()
   }
 
   onSaveClick() {
-    const recurrencyCopy = {
-      ...this.recurrency,
+    if (!this.form.valid) return;
+    const recurrency = this.getRecurrency(this.form, this.inputType, this.id)
+    this.modalCtrl.dismiss(recurrency, 'save')
+  }
+
+  ngOnDestroy() {
+    this.unsubscribeAll();
+  }
+
+  private subscribeAll() {
+    this.subscriptions.push(this.lastEventCtl.valueChanges.subscribe(this.onLastEventChange.bind(this)))
+    this.subscriptions.push(this.periodNbCtl.valueChanges.subscribe(this.onPeriodChange.bind(this)))
+    this.subscriptions.push(this.periodUnitCtl.valueChanges.subscribe(this.onPeriodChange.bind(this)))
+    this.subscriptions.push(this.expiryCtl.valueChanges.subscribe(this.onExpiryChange.bind(this)))
+  }
+
+  private unsubscribeAll() {
+    this.subscriptions.forEach(s => s.unsubscribe())
+    this.subscriptions = [];
+  }
+
+  private setForm(recurrency: Recurrency) {
+    this.form.setValue({
+      titleCtl: recurrency.title,
+      lastEventCtl: recurrency.lastEvent,
+      expiryCtl: recurrency.expiry,
+      periodNbCtl: recurrency.period.nb.toString(),
+      periodUnitCtl: recurrency.period.unit
+    })
+  }
+
+  private getRecurrency(form: FormGroup, inputType: RecurrencyInputType, id?: string): Recurrency {
+    return {
+      id,
+      inputType,
+      title: form.getRawValue().titleCtl!,
+      lastEvent: toIsoDate(form.getRawValue().lastEventCtl!),
+      expiry: toIsoDate(form.getRawValue().expiryCtl!),
       period: {
-        ...this.recurrency?.period
+        nb: toPositiveInteger(+form.getRawValue().periodNbCtl!),
+        unit: form.getRawValue().periodUnitCtl! as PeriodUnit
       }
     }
-    this.modalCtrl.dismiss(recurrencyCopy, 'save')
   }
 
 }

@@ -2,8 +2,8 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { IonicModule, ModalController } from '@ionic/angular';
 import { RecurrenciesService } from '../recurrencies/recurrencies.service';
-import { Observable } from 'rxjs';
-import { Recurrency, TEST } from '../recurrencies/recurrency.model3';
+import { Observable, map } from 'rxjs';
+import { Recurrency, TEST, progress } from '../recurrencies/recurrency.model3';
 import { RecurrencyItemComponent } from '../recurrencies/recurrency-item.component';
 import { RecurrencyEditModal } from '../recurrencies/recurrency-edit.modal';
 
@@ -42,8 +42,9 @@ export class HomePage {
   recurrencies$: Observable<Recurrency[]>;
 
   constructor(private rec: RecurrenciesService, private modalCtrl: ModalController) {
-    this.recurrencies$ = rec.getAll$();
-    this.recurrencies$.subscribe(console.log)
+    this.recurrencies$ = rec.getAll$().pipe(
+      map(r => r.sort((a,b) => progress(b) - progress(a)))
+    );
 
     /** TO DELETE, TESTING ONLY */
     TEST();
@@ -60,7 +61,9 @@ export class HomePage {
 
     const { data, role } = await modal.onWillDismiss()
     if (role === 'save') {
+      console.log('saving data:')
       console.log(data)
+      this.rec.save(data)
     }
   }
 
@@ -76,7 +79,9 @@ export class HomePage {
 
     const { data, role } = await modal.onWillDismiss()
     if (role === 'save') {
+      console.log('saving data:')
       console.log(data)
+      this.rec.save(data)
     }
   }
 

@@ -21,7 +21,11 @@ bootstrapApplication(AppComponent, {
     importProvidersFrom(
       IonicModule.forRoot(),
       provideFirebaseApp(() => initializeApp(firebaseConfig)),
-      provideFirestore(() => getFirestore()),
+      provideFirestore(() => {
+        const firestore = getFirestore();
+        // persistence????
+        return firestore;
+      }),
       provideAuth(() => getAuth())
     )
   ]
