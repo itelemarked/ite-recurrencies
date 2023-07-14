@@ -1,26 +1,17 @@
-
-export type IsoDate = string & { _type: 'IsoDate' }
-
-
-export type PeriodUnit = 'day' | 'week' | 'month' | 'year'
+import { IsoDate } from "./iso-date.type";
 
 
-export type PositiveInteger = number & { _type: 'PositiveNumber' }
+
+
+
+
+
+
 
 
 export interface RecurrencyPeriod {
   nb: PositiveInteger,
   unit: PeriodUnit
-}
-
-
-export interface IRecurrencyData {
-  title: string,
-	lastEvent: string, // or IsoDate???
-	period: {
-    nb: number,
-    unit: PeriodUnit  // or string???
-  }
 }
 
 
