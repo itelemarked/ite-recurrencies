@@ -1,5 +1,5 @@
 import { Injectable } from "@angular/core";
-import { Firestore, collectionData, CollectionReference, doc, setDoc } from "@angular/fire/firestore";
+import { Firestore, collectionData, doc, setDoc } from "@angular/fire/firestore";
 import { collection } from "@firebase/firestore";
 import { Observable, map } from "rxjs";
 import { IRecurrencyData, Recurrency, createRecurrency } from "./recurrency.model3";
@@ -27,7 +27,8 @@ export class RecurrenciesService {
 
     if (recurrency.id) {
       const id = recurrency.id;
-      await setDoc(doc(this.firestore, 'recurrencies', id), data)
+      const recurrenciesDoc = doc(this.firestore, 'recurrencies', id)
+      await setDoc(recurrenciesDoc, data)
     } else {
       const generatedId = doc(this.collectionRef)
       await setDoc(generatedId, data)

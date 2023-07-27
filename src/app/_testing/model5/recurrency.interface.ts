@@ -1,12 +1,13 @@
-import { LocalDateString } from "./local-date-string.type";
+import { PeriodUnit } from "./period-unit.type";
 import { PositiveInteger } from "./positive-integer.type";
+import { TimezoneDate } from "./timezone-date.type";
 
 export interface Recurrency {
   id?: string,
   title: string,
-  lastEvent: LocalDateString,
+  lastEvent: TimezoneDate,
   period: {
     nb: PositiveInteger,
-    unit: 'day' | 'week' | 'month' | 'year'
+    unit: PeriodUnit
   },
 }
