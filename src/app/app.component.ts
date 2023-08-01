@@ -12,4 +12,8 @@ import { IonicModule } from '@ionic/angular';
   `,
   styles: [``]
 })
-export class AppComponent {}
+export class AppComponent {
+  constructor() {
+    //Settings.defaultZone = 'America/New_York'
+  }
+}

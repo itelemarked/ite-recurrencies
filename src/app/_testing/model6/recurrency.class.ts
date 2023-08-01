@@ -1,61 +1,71 @@
+import { DateTime, DurationLike, Interval } from "luxon"
 
-type PeriodUnit = 'days' | 'weeks' | 'months' | 'years';
+type PeriodUnit = 'days' | 'weeks' | 'months' | 'years'
 
-type DateString = string & { _type: 'DateString' }
-
-function assertDateString(s: string): asserts s is DateString {
-  const regex = /^\d{4}-\d{2}-\d{2}$/
-  const matchRegex = s.match(regex) !== null
-  const isValidDate = new Date(s).toString() !== 'Invalid Date'
-  if (!matchRegex || !isValidDate) throw new Error(`assertDateString(): evaluating ${s}`)
+interface RecurrencyPeriod {
+	nb: number,
+	unit: PeriodUnit
 }
 
-type PositiveInteger = number & { _type: 'PositiveInteger' }
-
-function assertPositiveInteger(n: number): asserts n is PositiveInteger {
-  const isInteger = Number.isInteger(n)
-  const isPositive = n > 0
-  if (!isInteger || !isPositive) throw new Error(`assertPositiveInteger(): evaluating ${n}`)
+interface IRecurrency {
+	id?: string,
+	lastEvent: string,
+	period: RecurrencyPeriod
 }
 
+class Recurrency implements IRecurrency {
 
+  private _id: string | undefined
+  private _lastEvent: string
+  private _period: RecurrencyPeriod
 
-
-export class Recurrency {
-
-  _id?: string
-  _title: string
-  _lastEvent: DateString
-  _period: { nb: PositiveInteger, unit: PeriodUnit }
-
-  constructor(title: string, lastEvent: string, period: {nb: number, unit: PeriodUnit}, id?: string) {
-    assertDateString(lastEvent)
-    assertPositiveInteger(period.nb)
-
-    this._title = title;
-    this._lastEvent = lastEvent
-    this._period = {
-      nb: period.nb,
-      unit: period.unit
-    }
+  get id(): string | undefined {
+    return this._id
   }
 
-  getId() {}
+	get lastEvent(): string {
+    return this._lastEvent
+  }
 
-  getTitle() {}
+	get period(): RecurrencyPeriod {
+    return { ...this._period }
+  }
 
-  getLastEvent() {}
+	constructor(recurrency: IRecurrency) {
+    const { id, lastEvent, period } = recurrency;
+    this._id = id
+    this._lastEvent = lastEvent
+    this._period = { ...period }
+  }
 
-  getPeriod() {}
+	expiry(): string {
+    const lastEventDate = DateTime.fromISO(this._lastEvent, {zone: 'America/New_York'}).endOf('day')
 
-  getExpiry() {}
+    const duration = (): DurationLike => {
+      const { nb, unit } = this._period
+      switch (unit) {
+        case 'days': return { days: nb }
+        case 'weeks': return { weeks: nb }
+        case 'months': return { months: nb }
+        case 'years': return { years: nb }
+      }
+    }
 
-  getProgress() {}
+    const expiryDate = lastEventDate.plus(duration())
+    return expiryDate.toISODate()!
+  }
 
-  setLastEvent(val: string) {}
+	progress(): number {
+    const todayDate = DateTime.local({zone: 'America/New_York'}).endOf('day')
+    const lastEventDate = DateTime.fromISO(this._lastEvent, {zone: 'America/New_York'}).endOf('day')
+    const expiryDate = DateTime.fromISO(this.expiry(), {zone: 'America/New_York'}).endOf('day')
 
-  setPeriod(val: {nb: number} | {unit: PeriodUnit} | {nb: number, unit: PeriodUnit}) {}
+    const todayInterval = todayDate.valueOf() - lastEventDate.valueOf()
+    const totalInterval = expiryDate.valueOf() - lastEventDate.valueOf()
 
-  setExpiry(val: string) {}
+    return todayInterval / totalInterval;
+  }
+
+	// remaining(periodUnit: PeriodUnit): number {}
 
 }

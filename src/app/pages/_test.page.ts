@@ -2,6 +2,8 @@ import { CommonModule } from "@angular/common";
 import { ChangeDetectionStrategy, Component } from "@angular/core";
 import { IonicModule } from "@ionic/angular";
 import { getOffsetHours, getOffsetMinutes, getTimezoneDay, getTimezoneISOString, getTimezoneMonth, getTimezoneYear, toTimezoneOffset } from "../_testing/model5/timezone.utils";
+import { DateTime, Interval, Settings } from "luxon";
+
 
 
 
@@ -9,13 +11,10 @@ import { getOffsetHours, getOffsetMinutes, getTimezoneDay, getTimezoneISOString,
 
 function TEST() {
 
-  const date = new Date('2022-06-01T01:00:00Z')
-  const offset = toTimezoneOffset('-02:00')
-  console.log(getTimezoneISOString(date, offset))
-
-  // const reg1 = /(aaa)/
-  // const reg2 = /(\d{2})/
-  // console.log(('aaa12'.match(reg1.source + reg2.source)))
+  const d1 = DateTime.fromISO('2022-06-01').valueOf()
+  const d2 = DateTime.fromISO('2022-06-03').valueOf()
+  const interval = d1 - d2
+  console.log(interval)
 }
 
 

@@ -13,8 +13,6 @@ import { AppComponent } from './app/app.component';
 import { routes } from './app/routing';
 import { firebaseConfig } from './app/firebase';
 
-
-
 bootstrapApplication(AppComponent, {
   providers: [
     provideRouter(routes),
@@ -30,3 +28,4 @@ bootstrapApplication(AppComponent, {
     )
   ]
 });
+
