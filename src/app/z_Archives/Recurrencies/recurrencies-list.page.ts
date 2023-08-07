@@ -1,18 +1,14 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { IonicModule, ModalController } from '@ionic/angular';
-import { RecurrenciesService } from '../recurrencies/recurrencies.service';
 import { Observable, map } from 'rxjs';
-import { Recurrency, progress } from '../recurrencies/recurrency.model3';
-import { RecurrencyItemComponent } from '../recurrencies/recurrency-item.component';
-import { RecurrencyEditModal } from '../recurrencies/recurrency-edit.modal';
 
 
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, IonicModule, RecurrencyItemComponent, RecurrencyEditModal],
+  imports: [CommonModule, IonicModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <ion-header>
@@ -29,18 +25,18 @@ import { RecurrencyEditModal } from '../recurrencies/recurrency-edit.modal';
     <ion-content [forceOverscroll]="false">
       <ion-list>
 
-        <app-recurrency-item
+        <!-- <app-recurrency-item
           *ngFor="let recurrency of recurrencies$ | async"
           [recurrency]="recurrency"
           (click)="onOpenEditModal(recurrency)"
-        ></app-recurrency-item>
+        ></app-recurrency-item> -->
 
       </ion-list>
     </ion-content>
   `,
   styles: [``],
 })
-export class HomePage {
+export class RecurrencyListPage {
   recurrencies$: Observable<Recurrency[]>;
 
   constructor(private rec: RecurrenciesService, private modalCtrl: ModalController) {
