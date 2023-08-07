@@ -1,6 +1,7 @@
 import { CommonModule } from "@angular/common";
 import { ChangeDetectionStrategy, Component } from "@angular/core";
 import { IonicModule } from "@ionic/angular";
+import { DateTime } from "luxon";
 
 
 
@@ -9,7 +10,8 @@ import { IonicModule } from "@ionic/angular";
 
 function TEST() {
 
-
+  const d = DateTime.fromISO('2022-06-01', {zone: 'UTC-4'})
+  console.log(d)
 
 }
 

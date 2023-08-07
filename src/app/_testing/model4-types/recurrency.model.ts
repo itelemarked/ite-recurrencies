@@ -2,7 +2,7 @@ import { PositiveInteger } from "./integers.type";
 import { IsoDate, toIsoDate } from "./iso-date.type";
 import { PeriodUnit } from "./period-unit.type";
 
-import { DateTime, DurationLike } from "luxon";
+import { DateTime, DurationLike, Interval } from "luxon";
 
 
 
@@ -22,13 +22,15 @@ export interface Recurrency {
   period: RecurrencyPeriod
 }
 
-
-export function getExpiry(recurrency: Recurrency): IsoDate {
+// TODO:
+// - what if zone is not valid??? --> DateTime object will be marked as 'invalid', and toISO() will return 'null'!
+// - Theoretically, doesn't need 'zone'... right???
+export function getExpiry(recurrency: Recurrency, zone: string): IsoDate {
 
   const { lastEvent } = recurrency
   const { nb, unit } = recurrency.period
 
-  const lastEventDate = DateTime.fromISO(lastEvent, {zone: DEFAULT_TIMEZONE}).endOf('day')
+  const lastEventDate = DateTime.fromISO(lastEvent, {zone}).endOf('day')
 
   const duration = (): DurationLike => {
     switch (unit) {
@@ -44,10 +46,14 @@ export function getExpiry(recurrency: Recurrency): IsoDate {
   return expiryIsoDate
 }
 
-export function getProgress(): number {
-  const todayDate = DateTime.local({zone: ZONE}).endOf('day')
-  const lastEventDate = DateTime.fromISO(this._lastEvent, {zone: ZONE}).endOf('day')
-  const expiryDate = DateTime.fromISO(this.expiry(), {zone: ZONE}).endOf('day')
+// TODO: what if zone is not valid???
+export function getProgress(recurrency: Recurrency, zone: string): number {
+  const { lastEvent } = recurrency
+  const expiry = getExpiry(recurrency, zone)
+
+  const todayDate = DateTime.local({zone}).endOf('day')
+  const lastEventDate = DateTime.fromISO(lastEvent, {zone}).endOf('day')
+  const expiryDate = DateTime.fromISO(expiry, {zone}).endOf('day')
 
   const todayInterval = todayDate.valueOf() - lastEventDate.valueOf()
   const totalInterval = expiryDate.valueOf() - lastEventDate.valueOf()
@@ -55,9 +61,11 @@ export function getProgress(): number {
   return todayInterval / totalInterval;
 }
 
-export function getRemaining(periodUnit: PeriodUnit): number {
-  const todayDate = DateTime.local({zone: ZONE}).endOf('day')
-  const expiryDate = DateTime.fromISO(this.expiry(), {zone: ZONE}).endOf('day')
+// TODO: what if zone is not valid???
+export function getRemainingUnit(recurrency: Recurrency, unit: PeriodUnit, zone: string): number {
+  const todayDate = DateTime.local({zone}).endOf('day')
+  const expiry = getExpiry(recurrency, zone)
+  const expiryDate = DateTime.fromISO(expiry, {zone}).endOf('day')
   const i = Interval.fromDateTimes(todayDate, expiryDate)
-  return i.length(periodUnit)
+  return i.length(unit)
 }
