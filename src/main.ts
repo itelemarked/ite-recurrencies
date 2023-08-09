@@ -1,6 +1,7 @@
 
 import { bootstrapApplication } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
+import { provideAnimations } from '@angular/platform-browser/animations';
 import { importProvidersFrom } from '@angular/core';
 import { IonicModule } from '@ionic/angular';
 
@@ -16,6 +17,7 @@ import { firebaseConfig } from './app/firebase';
 bootstrapApplication(AppComponent, {
   providers: [
     provideRouter(routes),
+    provideAnimations(),
     importProvidersFrom(
       IonicModule.forRoot(),
       provideFirebaseApp(() => initializeApp(firebaseConfig)),
