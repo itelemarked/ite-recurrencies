@@ -1,8 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, EventEmitter, Output } from '@angular/core';
-import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
-import { State } from './auth-form.component';
 
 
 
@@ -12,13 +11,13 @@ import { State } from './auth-form.component';
   imports: [CommonModule, IonicModule, ReactiveFormsModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <form [formGroup]="form">
-      <ion-list>
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <ion-list style="border: 1px solid lightgrey; border-radius: 10px; padding: 0;">
 
-        <ion-item [ngClass]="{'app-invalid': isInvalid('usernameCtl')}">
+        <ion-item>
           <ion-label position="stacked">
             Username
-            <span *ngIf="isInvalid('usernameCtl')">required...</span>
+            <span class="error">required...</span>
           </ion-label>
           <ion-input
             type="text"
@@ -27,10 +26,10 @@ import { State } from './auth-form.component';
           ></ion-input>
         </ion-item>
 
-        <ion-item [ngClass]="{'app-invalid': isInvalid('passwordCtl')}">
+        <ion-item>
           <ion-label position="stacked">
             Password
-            <span *ngIf="isInvalid('passwordCtl')">must be at least 6 characters...</span>
+            <span class="error">must be at least 6 characters...</span>
           </ion-label>
           <ion-input
             type="password"
@@ -39,21 +38,33 @@ import { State } from './auth-form.component';
           ></ion-input>
         </ion-item>
 
-        <div class="ion-padding-top">
-          <ion-button expand="full" (click)="onLogin()">Login</ion-button>
-        </div>
+        <ion-item lines="none" class="ion-padding-top">
+          Don't have an account yet?
+          <ion-text color="primary" (click)="switchToSignupOutput.emit()" style="padding-left: 0.5em;"><b>Signup</b></ion-text>
+        </ion-item>
 
         <div class="ion-padding-top">
-          Don't have an account yet?
-          <ion-text color="primary" (click)="stateChangeOutput.emit({type: 'signedUp'})">Signup</ion-text>
+          <ion-button
+            class="ion-no-margin"
+            expand="full"
+            type="submit"
+          >Login</ion-button>
         </div>
 
       </ion-list>
     </form>
   `,
   styles: [`
-    .app-invalid {
+    .ng-submitted ion-item.ion-invalid {
       color: red;
+    }
+
+    .error {
+      visibility: hidden;
+    }
+
+    .ng-submitted ion-item.ion-invalid .error {
+      visibility: visible;
     }
   `],
 })
@@ -62,8 +73,8 @@ export class LoginComponent {
   @Output('login')
   loginOutput = new EventEmitter<{username: string, password: string}>()
 
-  @Output('stateChange')
-  stateChangeOutput = new EventEmitter<State>()
+  @Output('switchToSignup')
+  switchToSignupOutput = new EventEmitter<void>()
 
   form = this.fb.group({
     usernameCtl: ['', Validators.required],
@@ -72,19 +83,12 @@ export class LoginComponent {
 
   constructor(private fb: FormBuilder) {}
 
-  onLogin() {
-    this.form.markAllAsTouched()
-
+  onSubmit() {
     if (!this.form.valid) return;
 
     const username = this.form.get('usernameCtl')!.value!
     const password = this.form.get('passwordCtl')!.value!
     this.loginOutput.emit({username, password})
-  }
-
-  isInvalid(ctlName: string): boolean {
-    const ctl = this.form.get(ctlName)
-    return ctl !== null && ctl.touched && ctl.invalid
   }
 
 }

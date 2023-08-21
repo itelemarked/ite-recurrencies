@@ -11,15 +11,25 @@ import { IonicModule } from '@ionic/angular';
   imports: [CommonModule, IonicModule, ReactiveFormsModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
+    <ion-list style="border: 1px solid lightgrey; border-radius: 10px; padding: 0;">
 
-    <div class="ion-padding-top">
-      Your are currently logged in as: <br>
-      <b>{{ usernameInput }}</b>
-    </div>
+      <ion-item lines="none">
+        <ion-label class="ion-text-center">
+          <p>Your are currently logged in as:</p>
+          <h3>{{ usernameInput }}</h3>
+        </ion-label>
+      </ion-item>
 
-    <div class="ion-padding-top">
-      <ion-button expand="full" color="danger" (click)="logoutOutput.emit()">Logout</ion-button>
-    </div>
+      <div class="ion-padding-top">
+        <ion-button
+          expand="full"
+          color="danger"
+          (click)="logoutOutput.emit()"
+          class="ion-no-margin"
+        >Logout</ion-button>
+      </div>
+
+    </ion-list>
   `,
   styles: [``],
 })

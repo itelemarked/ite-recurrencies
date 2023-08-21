@@ -4,8 +4,9 @@ import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 
 import { AuthDataService } from './auth-data.service';
-import { AuthFormComponent } from './auth-form2.component.ts/auth-form.component';
-import { Request } from './auth-form2.component.ts/request';
+import { AuthFormComponent } from './auth-form.component.ts/auth-form.component';
+import { Request } from './auth-form.component.ts/request';
+import { map, take } from 'rxjs';
 
 
 
@@ -23,6 +24,10 @@ import { Request } from './auth-form2.component.ts/request';
 
     <ion-content [forceOverscroll]="false">
 
+      <p style="display: none;">show: {{ show }}</p>
+
+      <!-- <ion-spinner *ngIf="!show"></ion-spinner> -->
+
       <app-auth-form
         [user]="user$ | async"
         (request)="onRequest($event)"
@@ -34,19 +39,36 @@ import { Request } from './auth-form2.component.ts/request';
 })
 export class AuthPage {
 
-  user$ = this.authData.getUser$()
+  user$ = this.authData.getUser$().pipe(
+    map(usr => {
+      if (usr === null) return null
+      return {username: usr.username}
+    })
+  )
+  show = false
 
-  constructor(private authData: AuthDataService) {}
+  constructor(private authData: AuthDataService) {
+    this.user$.pipe(take(1)).subscribe(_ => {
+      this.show = true;
+    })
+  }
 
   onRequest(request: Request) {
     switch (request.type) {
-      case 'logout':
+      case 'logout': {
         this.authData.logout()
         break;
-      case 'login':
+      }
+      case 'login': {
         const { username, password } = request.data
         this.authData.login(username, password)
         break;
+      }
+      case 'signup': {
+        const { username, password } = request.data
+        this.authData.signup(username, password)
+        break;
+      }
     }
   }
 

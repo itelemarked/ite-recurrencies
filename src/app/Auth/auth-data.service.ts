@@ -1,18 +1,18 @@
 import { Injectable } from "@angular/core";
-import { Auth, signInWithEmailAndPassword, signOut, user } from "@angular/fire/auth";
+import { Auth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, user } from "@angular/fire/auth";
 import { Observable, map } from "rxjs";
-import { User } from "./auth-form/user";
+import { User } from "./user.model";
 
 
 
-const SUFFIX = '@aaa.com'
+const DOMAIN = '@ite-recurrency.com'
 
 function toUsername(email: string) {
-  return email.replace(SUFFIX, '')
+  return email.replace(DOMAIN, '')
 }
 
 function toEmail(username: string) {
-  return username + SUFFIX;
+  return username + DOMAIN;
 }
 
 
@@ -24,7 +24,6 @@ export class AuthDataService {
   constructor(private auth: Auth) {}
 
   getUser$(): Observable<User | null> {
-    // onAuthStateChanged(this.auth, (res) => console.log)
     return user(this.auth).pipe(
       map(usr => {
         if (usr === null) return null
@@ -42,6 +41,11 @@ export class AuthDataService {
 
   logout() {
     signOut(this.auth);
+  }
+
+  signup(username: string, password: string) {
+    const email = toEmail(username)
+    createUserWithEmailAndPassword(this.auth, email, password)
   }
 
 }

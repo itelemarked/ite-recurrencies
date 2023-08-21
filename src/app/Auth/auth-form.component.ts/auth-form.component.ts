@@ -2,7 +2,6 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
-import { User } from './user';
 import { LogoutComponent } from './logout.component';
 import { Request } from './request';
 import { LoginComponent } from './login.component';
@@ -36,32 +35,38 @@ import { animate, style, transition, trigger } from '@angular/animations';
     <app-login
       @fadeIn
       *ngIf="userInput === null && loginOrSignup === 'login'"
-      (login)="requestOutput.emit({type: 'login', data: $event})"
       (switchToSignup)="onSwitchTo('signup')"
+      (login)="requestOutput.emit({type: 'login', data: $event})"
     ></app-login>
 
     <app-signup
       @fadeIn
       *ngIf="userInput === null && loginOrSignup === 'signup'"
-      (signup)="requestOutput.emit({type: 'signup', data: $event})"
       (switchToLogin)="onSwitchTo('login')"
+      (signup)="requestOutput.emit({type: 'signup', data: $event})"
     ></app-signup>
 
   `,
-  styles: [``],
+  styles: [`
+    :host {
+      display: block;
+      margin: 10px;
+      min-width: 300px;
+      max-width: 400px;
+    }
+  `],
 })
 export class AuthFormComponent {
 
   loginOrSignup: 'login' | 'signup' = 'login'
 
   @Input('user')
-  userInput!: User | null;
+  userInput!: {username: string} | null;
 
   @Output('request')
   requestOutput = new EventEmitter<Request>()
 
   onSwitchTo(loginSignup: 'login' | 'signup') {
-    console.log(`switching to ${loginSignup}`)
     this.loginOrSignup = loginSignup;
   }
 
